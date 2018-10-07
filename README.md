@@ -1,5 +1,5 @@
 # tbcreator
-Python3 script to create SystemVerilog testbenche skeletons. Again, it uses version 3 of Python
+Python3 script to create SystemVerilog testbench skeletons. Again, it uses version 3 of Python
 
 tbcreatorExample.py contains all the instructions to use the project.
 It is suggested to make a copy of it and start by editing it.
