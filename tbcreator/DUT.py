@@ -9,14 +9,19 @@ class DUT(ClassType):
         self.itfs = []
         self.params = []
         self.paramValues = []
+        self.itfIsMaster = []
 
     def addParameter(self, param, value):
         self.params.append(param)
         self.paramValues.append(value)
 
-    def connectInterface(self, dutItfName, itfObj):
+    def connectInterface(self, dutItfName, itfObj, isMaster):
         self.dutItfName.append(dutItfName)
         self.itfs.append(itfObj)
+        if(isMaster == "Master"):
+            self.itfIsMaster.append(True)
+        else:
+            self.itfIsMaster.append(False)
 
     def instantiate(self):
         r = ""
@@ -33,7 +38,10 @@ class DUT(ClassType):
             r += "dut (\n"
         
         for i in range(0, len(self.dutItfName)):
-            r += "\t"+"."+self.dutItfName[i]+" ("+self.itfs[i].name+"),\n"
+            if(self.itfIsMaster[i]):
+                r += "\t"+"."+self.dutItfName[i]+" ("+self.itfs[i].name+".master),\n"
+            else:
+                r += "\t"+"."+self.dutItfName[i]+" ("+self.itfs[i].name+".slave),\n"
         r += "\t"+".clk (clk),\n"
         r += "\t"+".rst (rst)\n"
         r += "\t"+"//USER: CHECK IF CLK AND RESET ARE OK THIS WAY!\n"
@@ -70,7 +78,11 @@ class DUT(ClassType):
 
             
         for i in range(0, len(self.itfs)):
-            r += self.itfs[i].classType.typeName + " "+ self.dutItfName[i] + ",\n"
+            if(self.itfIsMaster[i]):
+                r += self.itfs[i].classType.typeName + ".master "+ self.dutItfName[i] + ",\n"
+            else:
+                r += self.itfs[i].classType.typeName + ".slave "+ self.dutItfName[i] + ",\n"
+
         
         r += "input logic clk,\ninput logic rst);\n"
 

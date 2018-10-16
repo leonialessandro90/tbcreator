@@ -14,7 +14,7 @@ class MonitorType(ClassType):
 
     def createFile(self):
         r = "class "+self.typeName+";\n\n"
-        r += "virtual "+self.itfType.typeName+" itf;\n"
+        r += "virtual "+self.itfType.typeName+".slave itf;\n"
         r += self.mbType.typeName+" mb;\n"
         r += self.trType.typeName+" tr;\n\n"
 
@@ -25,7 +25,7 @@ class MonitorType(ClassType):
         r += "\t"+"this.mb = mb;\n"
         r += "endfunction\n\n"
 
-        r += "function void setInterface(virtual " + self.itfType.typeName+" itf);\n"
+        r += "function void setInterface(virtual " + self.itfType.typeName+".slave itf);\n"
         r += "\t"+"this.itf = itf;\n"
         r += "endfunction\n\n"
 
@@ -36,10 +36,13 @@ class MonitorType(ClassType):
         r += "\n\t"+"\t"+"//USER: Transaction fields to fill:\n"
         for attr in self.trType.attributes:
             r += "\t"+"\t"+"//tr."+attr.name+" ("+attr.type+")\n"
-        r += "\n\t"+"\t"+"//USER: Inteface signals:\n"
-        for sig in self.itfType.signals:
-            if sig.direction != "special":
-                r += "\t"+"\t"+"//itf."+sig.name+" ("+sig.type+", "+sig.direction+")\n"
+        r += "\n\t"+"\t"+"//USER: Inteface signals to read:\n"
+        for sig in self.itfType.signalSlaveInput:
+            if(sig.name != "clk" and sig.name != "rst"):
+                r += "\t"+"\t"+"//itf."+sig.name+" ("+sig.type+")\n"
+        r += "\n\t"+"\t"+"//USER: Inteface signals to drive:\n"
+        for sig in self.itfType.signalSlaveOutput:
+            r += "\t"+"\t"+"//itf."+sig.name+" ("+sig.type+")\n"
         r += "\n\t"+"\t"+"mb.put(tr);\n"
         r += "\n\t"+"\t"+"//USER: perhaps your transaction requires more clock cycles/has multiple data?\n"
         r += "\t"+"end\n"

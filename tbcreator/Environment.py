@@ -15,17 +15,20 @@ class EnvironmentType(ClassType):
         self.mbsExp = []
         self.mbsAct = []
         self.itfs = []
+        self.itfsIsMasterFromDUTPerspective = []
 
-    def setInterfaces(self, itfs):
+    def setInterfaces(self, itfs, itfsIsMasterFromDUTPerspective):
         self.itfs = itfs
+        self.itfsIsMasterFromDUTPerspective = itfsIsMasterFromDUTPerspective
 
     def setup(self):
         scbType = ScoreboardType()
-        for itf in self.itfs:
+        for i in range(0, len(self.itfs)):
+            itf = self.itfs[i]
             itfType = itf.classType
             trType = itfType.trType
             mbType = MailboxType(trType.typeName)
-            if(itf.classType.isWrite == True):
+            if(self.itfsIsMasterFromDUTPerspective[i] == False):
                 drv = DriverType("Drv_"+itf.name, trType, mbType, itfType).createObj("drv_"+itf.name)
                 mbSend = mbType.createObj("mbSend_"+itf.name)
                 mbExp = mbType.createObj("mbExp_"+itf.name)
@@ -37,7 +40,7 @@ class EnvironmentType(ClassType):
                 self.mbsExp.append(mbExp)
                 scbType.addExpectedMailbox(mbExp)
 
-            if(itf.classType.isRead == True):
+            else:
                 mon = MonitorType("Mon_"+itf.name, trType, mbType, itfType).createObj("mon_"+itf.name)
                 mbAct = mbType.createObj("mbAct_"+itf.name)
                 mon.connectToInterface(itf)
@@ -68,7 +71,10 @@ class EnvironmentType(ClassType):
         r += "\nfunction new(\n"
 
         for i in range (0, len(self.itfs)):
-            r += "\t"+"\t"+"virtual "+self.itfs[i].classType.typeName + " "+self.itfs[i].name
+            if(self.itfsIsMasterFromDUTPerspective[i]):
+                r += "\t"+"\t"+"virtual "+self.itfs[i].classType.typeName + ".slave "+self.itfs[i].name
+            else:
+                r += "\t"+"\t"+"virtual "+self.itfs[i].classType.typeName + ".master "+self.itfs[i].name                
             if(i == len(self.itfs) - 1):
                 r += ");\n"
             else:

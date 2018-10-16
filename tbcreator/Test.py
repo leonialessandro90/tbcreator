@@ -7,13 +7,15 @@ class TestType(ClassType):
         ClassType.__init__(self, "Test")
         self.envType = None
         self.itfs = []
+        self.itfsIsMasterFromDUTPerspective = []
 
-    def setInterfaces(self, itfs):
+    def setInterfaces(self, itfs, isMasterFromDUTPerspective):
         self.itfs = itfs
+        self.itfsIsMasterFromDUTPerspective = isMasterFromDUTPerspective
 
     def setup(self):
         self.envType = EnvironmentType()
-        self.envType.setInterfaces(self.itfs)
+        self.envType.setInterfaces(self.itfs, self.itfsIsMasterFromDUTPerspective)
         self.envType.setup()
 
 
@@ -22,15 +24,24 @@ class TestType(ClassType):
 
         r += self.envType.typeName + " env;\n\n"
 
-        for itf in self.itfs:
-            r += "virtual " + itf.declare() 
+        for i in range (0, len(self.itfs)):
+            if(self.itfsIsMasterFromDUTPerspective[i]):
+                r += "virtual " + self.itfs[i].classType.typeName + ".slave "+self.itfs[i].name+";\n"
+            else:
+                r += "virtual " + self.itfs[i].classType.typeName + ".master "+self.itfs[i].name+";\n"
         
         r += "\nfunction new(\n"
         for i in range(0, len(self.itfs)):
             if i == len(self.itfs) - 1:
-                r += "\t"+"\t"+"virtual " + self.itfs[i].classType.typeName + " " +self.itfs[i].name + ");\n"
+                if self.itfsIsMasterFromDUTPerspective[i]:
+                    r += "\t"+"\t"+"virtual " + self.itfs[i].classType.typeName + ".slave " +self.itfs[i].name + ");\n"
+                else:
+                    r += "\t"+"\t"+"virtual " + self.itfs[i].classType.typeName + ".master " +self.itfs[i].name + ");\n"
             else:
-                r += "\t"+"\t"+"virtual " + self.itfs[i].classType.typeName + " " +self.itfs[i].name + ",\n"
+                if self.itfsIsMasterFromDUTPerspective[i]:  
+                    r += "\t"+"\t"+"virtual " + self.itfs[i].classType.typeName + ".slave " +self.itfs[i].name + ",\n"
+                else:
+                    r += "\t"+"\t"+"virtual " + self.itfs[i].classType.typeName + ".master " +self.itfs[i].name + ",\n"
         for itf in self.itfs:
             r += "\t"+"this."+itf.name +" = "+itf.name + ";\n"
         r += "endfunction\n\n"
@@ -54,7 +65,7 @@ class TestType(ClassType):
         
         for i in range (0, len(self.itfs)):
             itf = self.itfs[i]
-            if(itf.classType.isWrite):
+            if(self.itfsIsMasterFromDUTPerspective[i] == False):
                 r += "task SendTo"+itf.name+"("+itf.classType.trType.typeName+" tr);\n"
                 r += "\t"+"this.env.mbSend_"+itf.name+".put(tr);\n"
                 r += "\t"+"this.env.mbExp_"+itf.name+".put(tr);\n"

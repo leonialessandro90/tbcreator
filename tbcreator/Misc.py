@@ -61,13 +61,10 @@ class Attribute:
 
 class Signal:
 
-    def __init__(self, type, name, directionFromTBPerspective, comment = ""):
+    def __init__(self, type, name, comment = ""):
         self.type = type
         self.name = name
-        self.direction = directionFromTBPerspective
         self.comment = ""
-        if(directionFromTBPerspective != "in" and directionFromTBPerspective != "out" and directionFromTBPerspective != "special"):
-            print("Error: direction not allowed for signal "+self.name)
         if(comment != ""):
             self.comment = "\t\t\t//"+comment
 

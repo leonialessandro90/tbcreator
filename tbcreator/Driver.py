@@ -15,7 +15,7 @@ class DriverType(ClassType):
     def createFile(self):
         r = ""
         r += "class "+self.typeName+";\n\n"
-        r += "virtual "+self.itfType.typeName+" itf;\n"
+        r += "virtual "+self.itfType.typeName+".master itf;\n"
         r += self.mbType.typeName+" mb;\n"
         r += self.trType.typeName+" tr;\n\n"
 
@@ -26,27 +26,29 @@ class DriverType(ClassType):
         r += "\t"+"this.mb = mb;\n"
         r += "endfunction\n\n"
 
-        r += "function void setInterface(virtual " + self.itfType.typeName+" itf);\n"
+        r += "function void setInterface(virtual " + self.itfType.typeName+".master itf);\n"
         r += "\t"+"this.itf = itf;\n"
         r += "endfunction\n\n"
 
         r += "task run();\n"
 
         r += "\t"+"//USER: Initialize signals of the interface:\n"
-        for sig in self.itfType.signals:
-            if sig.direction == "in":
-                r += "\t"+"itf."+sig.name+" <= 0;\n"
+        for sig in self.itfType.signalMasterOutput:
+            r += "\t"+"itf."+sig.name+" <= 0;\n"
         
         r += "\n\t"+"forever begin\n"
         r += "\t"+"\t"+"@(posedge itf.clk);\n"
         r += "\t"+"\t"+"mb.get(tr);\n"
         r += "\n\t"+"\t"+"//USER: Transaction fields to fill:\n"
         for attr in self.trType.attributes:
-            r += "\t"+"\t"+"//tr."+attr.name+" ("+str(attr.type)+")\n"
-        r += "\n\t"+"\t"+"//USER: Interface signals:\n"
-        for sig in self.itfType.signals:
-            if(sig.direction != "special"):
-                r += "\t"+"\t"+"//itf."+sig.name+" ("+sig.type+" "+sig.direction+")\n"
+           r += "\t"+"\t"+"//tr."+attr.name+" ("+str(attr.type)+")\n"
+        r += "\n\t"+"\t"+"//USER: Interface signals to drive:\n"
+        for sig in self.itfType.signalMasterOutput:
+            r += "\t"+"\t"+"//itf."+sig.name+" ("+sig.type+")\n"
+        r += "\n\t"+"\t"+"//USER: Interface signals to read:\n"
+        for sig in self.itfType.signalMasterInput:
+            if(sig.name != "clk" and sig.name != "rst"):
+                r += "\t"+"\t"+"//itf."+sig.name+" ("+sig.type+")\n"
         r += "\n\t"+"\t"+"//USER: perhaps your transaction requires more clock cycles/has multiple data?ss\n"
         r += "\t"+"end\n"
         r += "endtask\n\n"

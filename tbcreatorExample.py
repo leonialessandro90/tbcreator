@@ -23,7 +23,8 @@ trRdType = TransactionType("TrPacketRead")
 trRdType.addAttribute(Attribute("logic[DWIDTH-1:0]","pkt","[$]","{}"))
 trRdType.addAttribute(Attribute("logic","error","","1'b0"))
 
-
+trAXIType = TransactionType("TrAXI")
+trAXIType.addAttribute(Attribute("logic[31:0]", "pkt", "[$]", "{}"))
 ##################################################################################
 ####################### PHASE 3: INTERFACE TYPES CREATION ########################
 ##################################################################################
@@ -40,16 +41,25 @@ trRdType.addAttribute(Attribute("logic","error","","1'b0"))
 ## Because the parameterizable interfaces are not supported (they are a hell    ##
 ##      to implement with virtual interfaces), the parameters are taken from    ##
 ##      the package file that is automatically included.                        ##
+## AXIFull and AXILite interfaces are available by default                      ##
 ##################################################################################
-itfWrType = InterfaceType("InterfaceWriteType", False, True)
-itfWrType.addSignal(Signal("logic[DWIDTH-1:0]","wdata","in"))
+itfWrType = InterfaceType("InterfaceWriteType")
+itfWrType.addSignal(Signal("logic[DWIDTH-1:0]","wwdata","in"), "isMasterOutput")
+itfWrType.addSignal(Signal("logic[DWIDTH-1:0]","wwe","in"), "isMasterOutput")
+itfWrType.addSignal(Signal("logic[DWIDTH/2-1:0]","wrdata","in"), "isMasterInput")
+itfWrType.addSignal(Signal("logic[DWIDTH/2-1:0]","wre","in"), "isMasterInput")
 itfWrType.addRelatedTransaction(trWrType)
 
-itfRdType = InterfaceType("InterfaceReadType", True, False)
-itfRdType.addSignal(Signal("logic[DWIDTH-1:0]","rdata","out"))
-itfRdType.addSignal(Signal("logic","error","out"))
+itfRdType = InterfaceType("InterfaceReadType")
+itfRdType.addSignal(Signal("logic[DWIDTH-1:0]","rdata","out"), "isMasterOutput")
+itfRdType.addSignal(Signal("logic","error","out"), "isMasterOutput")
 itfRdType.addRelatedTransaction(trRdType)
 
+itfAXIFullType = InterfaceType.createAXIFull()
+itfAXIFullType.addRelatedTransaction(trAXIType)
+
+itfAXILiteType = InterfaceType.createAXILite()
+itfAXILiteType.addRelatedTransaction(trAXIType)
 
 ##################################################################################
 ########################## PHASE 4: INTERFACES CREATION ##########################
@@ -62,6 +72,10 @@ itfWr1 = itfWrType.createObj("itfWr1")
 itfRd0 = itfRdType.createObj("itfRd0")
 itfRd1 = itfRdType.createObj("itfRd1")
 
+itfAXIFullLeft = itfAXIFullType.createObj("itfAXIFullLeft")
+itfAXIFullRight = itfAXIFullType.createObj("itfAXIFullRight")
+
+itfAXILiteSlave = itfAXILiteType.createObj("itfAXILiteSlave")
 
 ##################################################################################
 ############################# PHASE 5: DUT CREATION ##############################
@@ -80,10 +94,13 @@ itfRd1 = itfRdType.createObj("itfRd1")
 dut = DUT("MY_DUT_TYPE")
 dut.addParameter(Parameter("int","DWIDTH"), "DWIDTH")
 dut.addParameter(Parameter("bit","RESET_POLARITY"), "1'b1")
-dut.connectInterface("dutItfWr0", itfWr0)
-dut.connectInterface("dutItfWr1", itfWr1)
-dut.connectInterface("dutItfRd0", itfRd0)
-dut.connectInterface("dutItfRd1", itfRd1)
+dut.connectInterface("dutItfWr0", itfWr0, "Slave")
+dut.connectInterface("dutItfWr1", itfWr1, "Master")
+dut.connectInterface("dutItfRd0", itfRd0, "Master")
+dut.connectInterface("dutItfRd1", itfRd1, "Slave")
+dut.connectInterface("dutAXIFullLeft", itfAXIFullLeft, "Slave")
+dut.connectInterface("dutAXIFullRight", itfAXIFullRight, "Master")
+dut.connectInterface("dutAXILiteSlave", itfAXILiteSlave, "Slave")
 
 
 ##################################################################################

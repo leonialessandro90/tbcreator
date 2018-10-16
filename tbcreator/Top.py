@@ -10,11 +10,12 @@ class Top(ClassType):
         self.testType = None
         self.testCaseType = None
         self.itfs = dut.itfs
+        self.itfIsMasterFromDUTPerspective = dut.itfIsMaster
         self.dut = dut
         self.pkg = package
 
         self.testType = TestType()
-        self.testType.setInterfaces(self.itfs)
+        self.testType.setInterfaces(self.itfs, self.itfIsMasterFromDUTPerspective)
         self.testType.setup()
         self.testCaseType = TestCaseType(self.testType)
 
@@ -62,9 +63,16 @@ class Top(ClassType):
 
         for i in range(0, len(self.itfs)):
             if i != len(self.itfs)-1:
-                r += self.itfs[i].name+","
+                if(self.itfIsMasterFromDUTPerspective[i]):
+                    r += self.itfs[i].name+".slave,"
+                else:
+                    r += self.itfs[i].name+".master,"                
             else:
-                r += self.itfs[i].name+");\n"
+                if(self.itfIsMasterFromDUTPerspective[i]):
+                    r += self.itfs[i].name+".slave);\n"
+                else:
+                    r += self.itfs[i].name+".master);\n"
+
 
         r += "\t"+"\t"+"\t"+"test = t;\n"
         r += "\t"+"\t"+"end\n"
